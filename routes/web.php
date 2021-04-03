@@ -27,5 +27,5 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // Matches "/api/GetMessages
     $router->post('GetMessages', 'MessageController@GetMessages');
     // Matches "/api/GetActiveChats
-    $router->get('GetActiveChats', 'MessageController@GetActiveChats');
+    $router->get('GetActiveChats/{userId}', 'MessageController@GetActiveChats');
 });

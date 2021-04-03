@@ -20,51 +20,26 @@ class MessageController extends Controller
     //
 
 
-    public function SendMessage(Request $request) { 
+    public function SendMessage(Request $request) {  //recebe userId, idReceiver  message
 
-        //validate incoming request 
-        $this->validate($request, [
-            'idSender' => 'required',
-            'idReceiver' => 'required',
-            'message' => 'required',
-            'token' => 'required'
-        ]);
-
-        //todo
-        //fazer chamada ao microservice do user para verificar se token é valido
-
-        try {
-            
-            $message = new Message;
-            $message->idSender = $request->input('idSender');
-            $message->idReceiver = $request->input('idReceiver');
-            $message->message = $request->input('message');
-
-            $message->save();
-
-            //return successful response
-            return response()->json(['message' => 'CREATED'], 201);
-
-        } catch (\Exception $e) {
-            //return error message
-            return response()->json(['message' => 'Failed!'], 409);
-        }
-
+         \DB::table('messages')->insert(       
+                    ['idSender' => $request->userId, 
+                    'idReceiver' => $request->idReceiver, 
+                    'message' => $request->message,
+                    'created_at' => \Carbon\Carbon::now()]
+                ); 
     }
 
-    public function GetMessages(Request $request) { 
-
-        //todo
-        //autenticar o $user atual atraves do microservice dos users usando o token
+    public function GetMessages(Request $request) { //recebe userId e idReceiver
 
         $messages = \DB::table('messages')->select('idSender','idReceiver','message','created_at')
-            ->where(function($q) use($request,$user) {
-                $q->where('idSender', $user -> id)
-                ->Where('idReceiver', $request->input('idReceiver'));
+            ->where(function($q) use($request) {
+                $q->where('idSender', $request->userId)
+                ->Where('idReceiver', $request->idReceiver);
             })
-            ->orWhere(function($q2) use($request,$user) {
-                $q2->where('idSender', $request->input('idReceiver'))
-                ->Where('idReceiver', $user -> id);
+            ->orWhere(function($q2) use($request) {
+                $q2->where('idSender', $request->idReceiver)
+                ->Where('idReceiver', $request->userId);
             })
             ->orderBy('created_at', 'asc')
             ->get();
@@ -75,42 +50,32 @@ class MessageController extends Controller
 
     }
 
-    public function GetActiveChats(Request $request) {  #idReceiver
-        //todo
-        //$user = Auth::User();
-        //autenticar o $user atual atraves do microservice dos users usando o token
-        
+    public function GetActiveChats($userId) {  //recebe userId
         $ids = array();
         
         $output = array();
 
-        $messages = \DB::table('message')->select('idSender','idReceiver','message','created_at')
-            ->where(function($q) use($request,$user) {
-                $q->where('idSender', $user -> id);
+        $messages = \DB::table('messages')->select('idSender','idReceiver','message','created_at')
+            ->where(function($q) use($userId) {
+                $q->where('idSender', $userId);
             })
-            ->orWhere(function($q2) use($request,$user) {
-                $q2->where('idReceiver', $user -> id);
+            ->orWhere(function($q2) use($userId) {
+                $q2->where('idReceiver', $userId);
             })
             ->orderBy('created_at', 'asc')
             ->get();
 
             foreach ($messages as $message) {
-                if ($user->id == $message->idSender) {
-                    if (($message->idReceiver != $user->id) && (in_array($message->idReceiver, $ids) == false)){
+                if ($userId == $message->idSender) {
+                    if (($message->idReceiver != $userId) && (in_array($message->idReceiver, $ids) == false)){
                     $ids[] = $message->idReceiver;
-                    $firstName = User::findOrFail($message->idReceiver)->firstName;
-                    $lastName = User::findOrFail($message->idReceiver)->lastName;
-    
-                    $output[] = $message->idReceiver . ',' . $firstName . ',' . $lastName;
+                    $output[] = $message->idReceiver;
                     }
                 }
                 else {
-                    if (($message->idSender != $user->id) && (in_array($message->idSender, $ids) == false)){
+                    if (($message->idSender != $userId) && (in_array($message->idSender, $ids) == false)){
                     $ids[] = $message->idSender;
-                    $firstName = User::findOrFail($message->idSender)->firstName;
-                    $lastName = User::findOrFail($message->idSender)->lastName;
-    
-                    $output[] = $message->idSender . ',' . $firstName . ',' . $lastName;
+                    $output[] = $message->idSender;
                     }
                 }
                 
