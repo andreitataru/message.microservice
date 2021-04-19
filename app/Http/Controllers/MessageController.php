@@ -28,6 +28,11 @@ class MessageController extends Controller
                     'message' => $request->message,
                     'created_at' => \Carbon\Carbon::now()]
                 ); 
+        
+        return response()->json([
+            'status' => 'Message sent'
+        ], 201);
+
     }
 
     public function GetMessages(Request $request) { //recebe userId e idReceiver
