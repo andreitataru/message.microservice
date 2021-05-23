@@ -22,13 +22,24 @@ class MessageController extends Controller
 
     public function SendMessage(Request $request) {  //recebe userId, idReceiver  message
 
-         \DB::table('messages')->insert(       
+        if ($request->filled("idReply")){
+            \DB::table('messages')->insert(       
                     ['idSender' => $request->userId, 
                     'idReceiver' => $request->idReceiver, 
+                    'idReply' => $request->idReply, 
                     'message' => $request->message,
                     'created_at' => \Carbon\Carbon::now()]
                 ); 
-        
+        }
+        else{
+            \DB::table('messages')->insert(       
+                ['idSender' => $request->userId, 
+                'idReceiver' => $request->idReceiver,
+                'message' => $request->message,
+                'created_at' => \Carbon\Carbon::now()]
+            ); 
+        }
+         
         return response()->json([
             'status' => 'Message sent'
         ], 201);
@@ -37,7 +48,7 @@ class MessageController extends Controller
 
     public function GetMessages(Request $request) { //recebe userId e idReceiver
 
-        $messages = \DB::table('messages')->select('idSender','idReceiver','message','created_at')
+        $messages = \DB::table('messages')->select('id','idSender','idReceiver','idReply','message','created_at')
             ->where(function($q) use($request) {
                 $q->where('idSender', $request->userId)
                 ->Where('idReceiver', $request->idReceiver);
@@ -60,7 +71,7 @@ class MessageController extends Controller
         
         $output = array();
 
-        $messages = \DB::table('messages')->select('idSender','idReceiver','message','created_at')
+        $messages = \DB::table('messages')->select('id','idSender','idReceiver','idReply','message','created_at')
             ->where(function($q) use($userId) {
                 $q->where('idSender', $userId);
             })

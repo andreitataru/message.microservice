@@ -17,6 +17,7 @@ class CreateMessagesTable extends Migration
             $table->id();
             $table->bigInteger('idSender');
             $table->bigInteger('idReceiver');
+            $table->bigInteger('idReply')->nullable();
             $table->string('message');
             $table->timestamps();
         });
